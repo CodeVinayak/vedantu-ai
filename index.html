@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vedantu Q&A Bot</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Heroicons for play button -->
+    <script src="https://unpkg.com/@heroicons/v2/24/solid"></script>
+    <style>
+        /* Use the Inter font family */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar for better aesthetics */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: #2d3748;
+            /* gray-800 */
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #4a5568;
+            /* gray-600 */
+            border-radius: 4px;
+        }
+
+        /* Dialog animation */
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .dialog-animate {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Image zoom-in animation */
+        @keyframes zoom-in-once {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.05);
+            }
+
+            /* Zoom in by 5% */
+        }
+
+        .image-animate {
+            animation: zoom-in-once 3s forwards;
+            /* 3s duration, forwards keeps the end state */
+        }
+
+        /* Dropdown transition */
+        .dropdown-menu {
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            /* Prevent interaction when hidden */
+        }
+
+        .dropdown-menu.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100">
+
+    <!-- Error Dialog -->
+    <div id="errorDialog"
+        class="fixed top-4 right-4 max-w-sm bg-red-600 text-white p-4 rounded-lg shadow-lg hidden dialog-animate">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p id="errorMessage" class="text-sm font-medium"></p>
+            </div>
+            <div class="ml-auto pl-3">
+                <button onclick="hideErrorDialog()" class="text-white hover:text-gray-200">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <div class="max-w-4xl mx-auto bg-gray-800 p-6 md:p-8 rounded-2xl shadow-2xl border border-gray-700 relative">
+
+            <!-- Hamburger Menu -->
+            <div class="absolute top-4 right-4 z-10">
+                <button id="hamburgerButton" class="p-2 text-gray-400 hover:text-white focus:outline-none">
+                    <svg id="hamburgerIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path id="hamburgerPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div id="dropdownMenu"
+                    class="absolute right-0 mt-2 bg-gray-700 rounded-md shadow-lg py-1 hidden dropdown-menu">
+                    <a href="https://vinayaksingh.in/" target="_blank"
+                        class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 text-center flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                            <path
+                                d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-2a1 1 0 10-2 0v2H5V7h2a1 1 0 000-2H5z" />
+                        </svg>
+                        <span>LinkInBio</span>
+                    </a>
+                    <a href="https://vinayaksingh.com/" target="_blank"
+                        class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 text-center flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                            <path
+                                d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-2a1 1 0 10-2 0v2H5V7h2a1 1 0 000-2H5z" />
+                        </svg>
+                        <span>Portfolio</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Header Section -->
+            <div class="text-center mb-8">
+                <img src="logo.webp" alt="Ask Vedantu"
+                    class="mx-auto mb-4 block w-48 h-48 rounded-full object-cover image-animate">
+                <h1 class="text-3xl md:text-4xl font-bold text-white">Vedantu AI Q&A Bot</h1>
+                <p class="text-gray-400 mt-2">Developed by Vinayak Kumar Singh</p>
+            </div>
+
+            <!-- Question Input -->
+            <div class="mb-6">
+                <label for="questionText" class="block text-sm font-medium text-gray-300 mb-2">Curious about Vedantu?
+                    Let AI answer.</label>
+                <input type="text" id="questionText"
+                    class="w-full p-3 bg-gray-700 text-gray-200 border border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                    placeholder="Example: Tell me about yourself">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button id="generateButton"
+                    class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out">
+                    Ask AI
+                </button>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="hidden text-center my-6">
+                <div class="flex justify-center items-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <span id="loadingMessage">Generating Response...</span>
+                </div>
+            </div>
+
+            <!-- Response Area -->
+            <div id="responseContainer" class="mt-8 p-6 bg-gray-900/70 border border-gray-700 rounded-lg">
+                <h3 class="font-semibold text-lg mb-2 text-white">Answer:</h3>
+                <p id="responseText" class="text-gray-300 whitespace-pre-wrap">Answer will appear here and Audio will play automatically.</p>
+                <!--
+                 Audio Play Button -->
+                <div id="audioContainer" class="mt-4 hidden">
+                    <button id="playAudioButton"
+                        class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span>Play Answer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM element references
+        const generateButton = document.getElementById('generateButton');
+        const questionTextInput = document.getElementById('questionText');
+        const responseText = document.getElementById('responseText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const responseContainer = document.getElementById('responseContainer');
+        const audioContainer = document.getElementById('audioContainer');
+        const playAudioButton = document.getElementById('playAudioButton');
+        const errorDialog = document.getElementById('errorDialog');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingMessageSpan = document.getElementById('loadingMessage');
+        const hamburgerButton = document.getElementById('hamburgerButton');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        const hamburgerPath = document.getElementById('hamburgerPath');
+
+        const hamburgerIconPath = "M4 6h16M4 12h16M4 18h16";
+        const closeIconPath = "M6 18L18 6M6 6l12 12";
+
+        // Model names
+        const TEXT_MODEL_NAME = "gemini-2.5-pro-preview-06-05";
+
+        // --- SECURITY WARNING ---
+        const API_KEY = "AIzaSyDyJhbF2DUDn8plMQsUjLrrAnvYAdzdhrc";
+
+        // Global variables
+        let audioContext;
+        let audioBuffer;
+        let isPlaying = false;
+        let currentAudioSource = null;
+        let KNOWLEDGE_BASE = '';
+
+        // Loading message states
+        let loadingMessageTimeoutId = null;
+        let loadingMessageIntervalId = null;
+        const loadingMessages = [
+            { text: "Generating Response...", duration: 5000 },
+            { text: "Thinking...", duration: 5000 },
+            { text: "Almost there...", duration: 5000 },
+            { text: "Summoning the answer...", duration: 5000 }
+        ];
+        let currentMessageIndex = 0;
+
+        // --- Load Resume Data on Page Load ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('Vedantu.txt');
+                if (!response.ok) {
+                    throw new Error('Vedantu.txt file not found or failed to load.');
+                }
+                KNOWLEDGE_BASE = await response.text();
+                console.log('Resume data loaded successfully.');
+            } catch (error) {
+                console.error('Error loading resume data:', error);
+                showErrorDialog(error.message);
+                generateButton.disabled = true;
+                generateButton.textContent = 'Error: Could not load resume';
+                generateButton.classList.add('bg-red-500', 'cursor-not-allowed');
+            }
+        });
+
+        // --- DIALOG FUNCTIONS ---
+        function showErrorDialog(message) {
+            errorMessage.textContent = message;
+            errorDialog.classList.remove('hidden');
+            setTimeout(hideErrorDialog, 5000);
+        }
+
+        function hideErrorDialog() {
+            errorDialog.classList.add('hidden');
+        }
+
+        // --- LOADING MESSAGE FUNCTIONS ---
+        function startLoadingMessages() {
+            currentMessageIndex = 0;
+            loadingMessageSpan.textContent = loadingMessages[currentMessageIndex].text;
+            scheduleNextLoadingMessage();
+        }
+
+        function scheduleNextLoadingMessage() {
+            clearTimeout(loadingMessageTimeoutId);
+            clearInterval(loadingMessageIntervalId);
+
+            if (currentMessageIndex < loadingMessages.length - 1) {
+                loadingMessageTimeoutId = setTimeout(() => {
+                    currentMessageIndex++;
+                    loadingMessageSpan.textContent = loadingMessages[currentMessageIndex].text;
+                    scheduleNextLoadingMessage();
+                }, loadingMessages[currentMessageIndex].duration);
+            } else {
+                loadingMessageIntervalId = setInterval(() => {
+                    loadingMessageSpan.textContent = loadingMessages[currentMessageIndex].text;
+                }, loadingMessages[currentMessageIndex].duration);
+            }
+        }
+
+        function stopLoadingMessages() {
+            clearTimeout(loadingMessageTimeoutId);
+            clearInterval(loadingMessageIntervalId);
+            loadingMessageTimeoutId = null;
+            loadingMessageIntervalId = null;
+        }
+
+        // --- AUDIO FUNCTIONS ---
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // --- NEW: Function to stop any currently playing audio ---
+        function stopCurrentAudio() {
+            if (currentAudioSource) {
+                currentAudioSource.stop(0);
+                currentAudioSource = null;
+                isPlaying = false;
+                playAudioButton.disabled = false;
+                playAudioButton.querySelector('span').textContent = 'Play Answer';
+                playAudioButton.classList.remove('opacity-50');
+            }
+        }
+
+        function playAudio() {
+            stopCurrentAudio();
+
+            if (!audioContext || !audioBuffer) return;
+
+            isPlaying = true;
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+
+            currentAudioSource = source;
+            source.start(0);
+
+            playAudioButton.disabled = true;
+            playAudioButton.querySelector('span').textContent = 'Playing...';
+            playAudioButton.classList.add('opacity-50');
+
+            source.onended = () => {
+                if (currentAudioSource === source) {
+                    isPlaying = false;
+                    currentAudioSource = null;
+                    playAudioButton.disabled = false;
+                    playAudioButton.querySelector('span').textContent = 'Play Answer';
+                    playAudioButton.classList.remove('opacity-50');
+                }
+            };
+        }
+
+        async function textToSpeech(text) {
+            audioContainer.classList.remove('hidden');
+            playAudioButton.disabled = true;
+            playAudioButton.querySelector('span').textContent = 'Generating Audio...';
+            playAudioButton.classList.add('opacity-50');
+
+            const TTS_URL = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${API_KEY}`;
+            const payload = {
+                "input": { "text": text },
+                "voice": { "languageCode": "en-IN", "name": "en-IN-Chirp3-HD-Zubenelgenubi" },
+                "audioConfig": { "audioEncoding": "MP3" }
+            };
+
+            try {
+                const response = await fetch(TTS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const message = errorData.error?.message || `TTS API error: ${response.status}`;
+                    throw new Error(message);
+                }
+                const data = await response.json();
+                if (!data.audioContent) {
+                    throw new Error('Invalid response format from TTS API');
+                }
+                const audioData = atob(data.audioContent);
+                const arrayBuffer = new ArrayBuffer(audioData.length);
+                const uint8Array = new Uint8Array(arrayBuffer);
+                for (let i = 0; i < audioData.length; i++) {
+                    uint8Array[i] = audioData.charCodeAt(i);
+                }
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                console.log('Audio successfully generated. Playing automatically.');
+                playAudio();
+            } catch (error) {
+                console.error('TTS Error:', error);
+                showErrorDialog(`Failed to generate speech: ${error.message}`);
+                audioContainer.classList.add('hidden');
+                playAudioButton.disabled = false;
+                playAudioButton.classList.remove('opacity-50');
+                playAudioButton.querySelector('span').textContent = 'Play Answer';
+            }
+        }
+
+        function stripMarkdown(text) {
+            return text
+                .replace(/\*\*([^*]+)\*\*/g, '$1') // bold
+                .replace(/\*([^*]+)\*/g, '$1')       // italics
+                .replace(/`([^`]+)`/g, '$1')          // inline code
+                .replace(/\*/g, '');               // remove any remaining asterisks
+        }
+
+        async function generateContent() {
+            initAudioContext();
+
+            stopCurrentAudio();
+
+            const questionText = questionTextInput.value.trim();
+
+            if (!questionText) {
+                showErrorDialog('Please enter a question.');
+                return;
+            }
+            if (!KNOWLEDGE_BASE) {
+                showErrorDialog('Resume data is not loaded yet. Please try again in a moment.');
+                return;
+            }
+
+            loadingIndicator.classList.remove('hidden');
+            responseContainer.classList.add('hidden');
+            audioContainer.classList.add('hidden');
+            generateButton.disabled = true;
+            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            startLoadingMessages();
+
+
+             const prompt = `
+            ### PERSONA & CONTEXT ###
+            You are 'Veda', an advanced AI-powered student and parent assistant for Vedantu. Your personality is patient, positive, and supportive.You will answer in simple language without using any special keywords.
+            ### KNOWLEDGE BASE (RESUME TEXT) ###
+            ${KNOWLEDGE_BASE}
+            ### END KNOWLEDGE BASE ###
+            ### FORMULATE USER-FACING REPLY ###
+            Based on the user's query and our persona, formulate a helpful and clear response. Follow these core rules:
+            1.  **Simple Natural Language:** Be conversational and easy to understand. Avoid jargon.
+            2.  **Pro-Vedantu Stance:** Frame answers positively. Acknowledge concerns and pivot to solutions.
+            3.  **Intelligent Escalation:** If the query matches an escalation trigger (complaints, personal data, direct request), use the protocol to connect them to a human.
+            4.  **Handle Out-of-Scope Questions:** Gently guide unrelated questions back to Vedantu.
+            ### USER'S QUESTION ###
+            ${questionText}
+            `;
+
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL_NAME}:generateContent?key=${API_KEY}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const message = errorData.error?.message || `API error: ${response.status}`;
+                    throw new Error(message);
+                }
+
+                const data = await response.json();
+
+                if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+                    const aiResponse = data.candidates[0].content.parts[0].text.trim();
+                    const plainResponse = stripMarkdown(aiResponse);
+                    responseText.textContent = plainResponse;
+                    await textToSpeech(plainResponse);
+                } else {
+                    const finishReason = data.candidates?.[0]?.finishReason;
+                    if (finishReason === 'SAFETY') {
+                        throw new Error("The response was blocked due to safety settings.");
+                    } else {
+                        throw new Error("Received an invalid or empty response from the API.");
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showErrorDialog(`Error: ${error.message}`);
+            } finally {
+                stopLoadingMessages();
+                loadingIndicator.classList.add('hidden');
+                responseContainer.classList.remove('hidden');
+                generateButton.disabled = false;
+                generateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // --- Event Listeners ---
+        generateButton.addEventListener('click', generateContent);
+        playAudioButton.addEventListener('click', playAudio);
+
+        // Add keyboard shortcut for Enter key
+        questionTextInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission
+                generateButton.click(); // Trigger the generate button click
+            }
+        });
+
+        // Hamburger menu toggle
+        hamburgerButton.addEventListener('click', () => {
+            const isHidden = dropdownMenu.classList.toggle('hidden');
+            dropdownMenu.classList.toggle('active', !isHidden);
+
+            // Toggle icon path
+            if (isHidden) {
+                hamburgerPath.setAttribute('d', hamburgerIconPath);
+            } else {
+                hamburgerPath.setAttribute('d', closeIconPath);
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!hamburgerButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                dropdownMenu.classList.add('hidden');
+                dropdownMenu.classList.remove('active');
+                hamburgerPath.setAttribute('d', hamburgerIconPath); // Reset to hamburger icon
+            }
+        });
+    </script>
+</body>
+
+</html>
