@@ -1,0 +1,67 @@
+/* Use the Inter font family */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom scrollbar for better aesthetics */
+textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+textarea::-webkit-scrollbar-track {
+    background: #2d3748;
+    /* gray-800 */
+}
+
+textarea::-webkit-scrollbar-thumb {
+    background-color: #4a5568;
+    /* gray-600 */
+    border-radius: 4px;
+}
+
+/* Dialog animation */
+@keyframes slideIn {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.dialog-animate {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Image zoom-in animation */
+@keyframes zoom-in-once {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.05);
+    }
+    /* Zoom in by 5% */
+}
+
+.image-animate {
+    animation: zoom-in-once 3s forwards;
+    /* 3s duration, forwards keeps the end state */
+}
+
+/* Dropdown transition */
+.dropdown-menu {
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    /* Prevent interaction when hidden */
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+} 
