@@ -127,16 +127,13 @@
                 <p id="responseText" class="text-gray-300 whitespace-pre-wrap">Answer will appear here and Audio will play automatically.</p>
                 <!--
                  Audio Play Button -->
-                <div id="audioContainer" class="mt-4 hidden">
-                    <button id="playAudioButton"
-                        class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                                clip-rule="evenodd" />
-                        </svg>
+                <div id="audioContainer" class="hidden flex items-center gap-4 mt-4">
+                    <button id="playAudioButton" class="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2">
                         <span>Play Answer</span>
                     </button>
+                    <!-- Thumbs Up/Down Buttons -->
+                    <button id="thumbsUpButton" class="ml-2 px-3 py-2 rounded bg-gray-200 hover:bg-green-200" title="Thumbs Up">👍</button>
+                    <button id="thumbsDownButton" class="ml-2 px-3 py-2 rounded bg-gray-200 hover:bg-red-200" title="Thumbs Down">👎</button>
                 </div>
             </div>
         </div>

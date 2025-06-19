@@ -38,6 +38,26 @@ app.get('/api/analytics', (req, res) => {
     });
 });
 
+// Endpoint to update rating for an analytics entry
+app.post('/api/analytics/rate', (req, res) => {
+    const { id, rating } = req.body;
+    if (!id || !['up', 'down'].includes(rating)) {
+        return res.status(400).json({ error: 'Invalid id or rating' });
+    }
+    fs.readFile(ANALYTICS_FILE, 'utf8', (err, data) => {
+        if (err) return res.status(500).json({ error: 'Read error' });
+        let arr = [];
+        try { arr = JSON.parse(data); } catch (e) {}
+        const idx = arr.findIndex(entry => entry.id === id);
+        if (idx === -1) return res.status(404).json({ error: 'Entry not found' });
+        arr[idx].rating = rating;
+        fs.writeFile(ANALYTICS_FILE, JSON.stringify(arr, null, 2), (err) => {
+            if (err) return res.status(500).json({ error: 'Write error' });
+            res.json({ success: true });
+        });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Analytics server running on http://localhost:${PORT}`);
 }); 

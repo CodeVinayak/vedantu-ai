@@ -11,6 +11,8 @@ const loadingMessageSpan = document.getElementById('loadingMessage');
 const hamburgerButton = document.getElementById('hamburgerButton');
 const dropdownMenu = document.getElementById('dropdownMenu');
 const hamburgerPath = document.getElementById('hamburgerPath');
+const thumbsUpButton = document.getElementById('thumbsUpButton');
+const thumbsDownButton = document.getElementById('thumbsDownButton');
 
 const hamburgerIconPath = "M4 6h16M4 12h16M4 18h16";
 const closeIconPath = "M6 18L18 6M6 6l12 12";
@@ -29,6 +31,7 @@ let audioBuffer;
 let isPlaying = false;
 let currentAudioSource = null;
 let KNOWLEDGE_BASE = '';
+let lastAnswerId = null;
 
 // Loading message states
 let loadingMessageTimeoutId = null;
@@ -52,8 +55,10 @@ function saveAnalyticsEntry(question, answer) {
         id: generateUniqueId(),
         question,
         answer,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        rating: null
     };
+    lastAnswerId = entry.id;
     fetch('http://localhost:3001/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,6 +66,46 @@ function saveAnalyticsEntry(question, answer) {
     }).catch(err => {
         console.error('Failed to save analytics:', err);
     });
+    // Enable rating buttons for new answer
+    setRatingButtonsEnabled(true);
+    setRatingButtonsHighlight(null);
+}
+
+function setRatingButtonsEnabled(enabled) {
+    thumbsUpButton.disabled = !enabled;
+    thumbsDownButton.disabled = !enabled;
+    if (enabled) {
+        thumbsUpButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        thumbsDownButton.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+        thumbsUpButton.classList.add('opacity-50', 'cursor-not-allowed');
+        thumbsDownButton.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+function setRatingButtonsHighlight(rating) {
+    thumbsUpButton.classList.remove('bg-green-400');
+    thumbsDownButton.classList.remove('bg-red-400');
+    if (rating === 'up') {
+        thumbsUpButton.classList.add('bg-green-400');
+    } else if (rating === 'down') {
+        thumbsDownButton.classList.add('bg-red-400');
+    }
+}
+
+async function rateAnswer(rating) {
+    if (!lastAnswerId) return;
+    setRatingButtonsEnabled(false);
+    setRatingButtonsHighlight(rating);
+    try {
+        await fetch('http://localhost:3001/api/analytics/rate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: lastAnswerId, rating })
+        });
+    } catch (err) {
+        console.error('Failed to save rating:', err);
+    }
 }
 
 // --- Load Knowledge Base on Page Load ---
@@ -138,6 +183,9 @@ function stopCurrentAudio() {
         playAudioButton.disabled = false;
         playAudioButton.querySelector('span').textContent = 'Play Answer';
         playAudioButton.classList.remove('opacity-50');
+        // Change button to play mode
+        playAudioButton.removeEventListener('click', stopCurrentAudio);
+        playAudioButton.addEventListener('click', playAudio, { once: true });
     }
 }
 
@@ -152,9 +200,12 @@ function playAudio() {
     currentAudioSource = source;
     source.start(0);
 
-    playAudioButton.disabled = true;
-    playAudioButton.querySelector('span').textContent = 'Playing...';
-    playAudioButton.classList.add('opacity-50');
+    playAudioButton.disabled = false;
+    playAudioButton.querySelector('span').textContent = 'Stop';
+    playAudioButton.classList.remove('opacity-50');
+    // Change button to stop mode
+    playAudioButton.removeEventListener('click', playAudio);
+    playAudioButton.addEventListener('click', stopCurrentAudio, { once: true });
 
     source.onended = () => {
         if (currentAudioSource === source) {
@@ -163,6 +214,9 @@ function playAudio() {
             playAudioButton.disabled = false;
             playAudioButton.querySelector('span').textContent = 'Play Answer';
             playAudioButton.classList.remove('opacity-50');
+            // Change button to play mode
+            playAudioButton.removeEventListener('click', stopCurrentAudio);
+            playAudioButton.addEventListener('click', playAudio, { once: true });
         }
     };
 }
@@ -318,7 +372,7 @@ async function generateContent() {
 
 // --- Event Listeners ---
 generateButton.addEventListener('click', generateContent);
-playAudioButton.addEventListener('click', playAudio);
+playAudioButton.addEventListener('click', playAudio, { once: true });
 
 questionTextInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
@@ -340,3 +394,9 @@ document.addEventListener('click', (event) => {
         hamburgerPath.setAttribute('d', hamburgerIconPath);
     }
 });
+
+if (thumbsUpButton && thumbsDownButton) {
+    thumbsUpButton.addEventListener('click', () => rateAnswer('up'));
+    thumbsDownButton.addEventListener('click', () => rateAnswer('down'));
+    setRatingButtonsEnabled(false); // Disabled until an answer is generated
+}
