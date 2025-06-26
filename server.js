@@ -22,6 +22,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Serve static files from the root directory
+app.use(express.static(path.join(__dirname)));
+
+// Serve index.html for the root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Ensure the analytics file exists on startup
 if (!fs.existsSync(ANALYTICS_FILE)) {
     fs.writeFileSync(ANALYTICS_FILE, '[]', 'utf8');
