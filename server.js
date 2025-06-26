@@ -10,13 +10,16 @@ const PORT = 3001;
 const ANALYTICS_FILE = path.join(__dirname, 'vedantu_analytics.json');
 
 // --- DYNAMIC CORS CONFIGURATION ---
-// This setup allows requests from any port on localhost or 127.0.0.1,
-// which is perfect for local development with various tools (like VS Code Live Server).
+// This setup allows requests from local development addresses AND your deployed site.
 const corsOptions = {
     origin: function (origin, callback) {
-        // 'origin' is the URL of the frontend making the request (e.g., 'http://127.0.0.1:5501')
-        if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-            // If the origin is missing (e.g., a server-to-server request) or it's from a recognized local address, allow it.
+        if (
+            !origin || // Allow requests with no origin (like server-to-server or curl)
+            origin.startsWith('http://localhost:') || // Allow any port on localhost
+            origin.startsWith('http://127.0.0.1:') || // Allow any port on 127.0.0.1
+            origin === 'https://vedantu.vinayaksingh.com' // Allow your deployed site
+        ) {
+            // If the origin matches one of our rules, allow it.
             callback(null, true);
         } else {
             // Otherwise, block the request.
