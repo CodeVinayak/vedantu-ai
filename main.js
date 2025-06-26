@@ -17,13 +17,9 @@ const thumbsDownButton = document.getElementById('thumbsDownButton');
 const hamburgerIconPath = "M4 6h16M4 12h16M4 18h16";
 const closeIconPath = "M6 18L18 6M6 6l12 12";
 
-// Model names
-const TEXT_MODEL_NAME = "gemini-2.5-flash-lite-preview-06-17";
-
-// --- SECURITY WARNING ---
-// It's highly recommended to move this key to a secure backend environment
-// to prevent it from being exposed on the client-side.
-const API_KEY = "AIzaSyDyJhbF2DUDn8plMQsUjLrrAnvYAdzdhrc";
+// --- API KEY REMOVED ---
+// The API Key has been securely moved to the backend (server.js and .env file).
+// The frontend will now make requests to your server, not directly to Google APIs.
 
 // Global variables
 let audioContext;
@@ -227,11 +223,10 @@ async function textToSpeech(text) {
     playAudioButton.querySelector('span').textContent = 'Generating Audio...';
     playAudioButton.classList.add('opacity-50');
 
-    const TTS_URL = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${API_KEY}`;
+    // *** MODIFIED: URL now points to your secure backend proxy ***
+    const TTS_URL = 'http://localhost:3001/api/text-to-speech';
     const payload = {
-        "input": { "text": text },
-        "voice": { "languageCode": "en-IN", "name": "en-IN-Chirp3-HD-Zubenelgenubi" },
-        "audioConfig": { "audioEncoding": "MP3" }
+        text: text // The server only needs the text to synthesize
     };
 
     try {
@@ -242,12 +237,12 @@ async function textToSpeech(text) {
         });
         if (!response.ok) {
             const errorData = await response.json();
-            const message = errorData.error?.message || `TTS API error: ${response.status}`;
+            const message = errorData.error || `TTS proxy error: ${response.status}`;
             throw new Error(message);
         }
         const data = await response.json();
         if (!data.audioContent) {
-            throw new Error('Invalid response format from TTS API');
+            throw new Error('Invalid response format from TTS API proxy');
         }
         const audioData = atob(data.audioContent);
         const arrayBuffer = new ArrayBuffer(audioData.length);
@@ -271,9 +266,9 @@ async function textToSpeech(text) {
 function stripMarkdown(text) {
     return text
         .replace(/\*\*([^*]+)\*\*/g, '$1') // bold
-        .replace(/\*([^*]+)\*/g, '$1')      // italics
-        .replace(/`([^`]+)`/g, '$1')        // inline code
-        .replace(/\*/g, '');                // remove any remaining asterisks
+        .replace(/\*([^*]+)\*/g, '$1')     // italics
+        .replace(/`([^`]+)`/g, '$1')       // inline code
+        .replace(/\*/g, '');               // remove any remaining asterisks
 }
 
 async function generateContent() {
@@ -314,9 +309,10 @@ async function generateContent() {
         ${questionText}
     `;
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL_NAME}:generateContent?key=${API_KEY}`;
+    // *** MODIFIED: URL now points to your secure backend proxy ***
+    const API_URL = 'http://localhost:3001/api/generate-content';
     const payload = {
-        contents: [{ parts: [{ text: prompt }] }]
+        prompt: prompt // Send the full prompt to the server
     };
 
     try {
@@ -328,7 +324,7 @@ async function generateContent() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            const message = errorData.error?.message || `API error: ${response.status}`;
+            const message = errorData.error || `API proxy error: ${response.status}`;
             throw new Error(message);
         }
 
@@ -352,16 +348,13 @@ async function generateContent() {
             if (finishReason === 'SAFETY') {
                 throw new Error("The response was blocked due to safety settings.");
             } else {
-                throw new Error("Received an invalid or empty response from the API.");
+                throw new Error("Received an invalid or empty response from the API proxy.");
             }
         }
     } catch (error) {
         console.error('Error:', error);
         showErrorDialog(`Error: ${error.message}`);
     } finally {
-        // *** FIX APPLIED HERE ***
-        // This 'finally' block now runs AFTER the text is generated AND the audio is ready.
-        // This is the correct behavior from your first script.
         stopLoadingMessages();
         loadingIndicator.classList.add('hidden');
         responseContainer.classList.remove('hidden');

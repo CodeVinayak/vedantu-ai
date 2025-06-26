@@ -2,29 +2,100 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const axios = require('axios');
+require('dotenv').config(); // Loads variables from your .env file
 
 const app = express();
 const PORT = 3001;
 const ANALYTICS_FILE = path.join(__dirname, 'vedantu_analytics.json');
 
-app.use(cors());
+// --- DYNAMIC CORS CONFIGURATION ---
+// This setup allows requests from any port on localhost or 127.0.0.1,
+// which is perfect for local development with various tools (like VS Code Live Server).
+const corsOptions = {
+    origin: function (origin, callback) {
+        // 'origin' is the URL of the frontend making the request (e.g., 'http://127.0.0.1:5501')
+        if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+            // If the origin is missing (e.g., a server-to-server request) or it's from a recognized local address, allow it.
+            callback(null, true);
+        } else {
+            // Otherwise, block the request.
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+};
+
+// Use the dynamic CORS options and enable Express to parse JSON bodies
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Ensure the analytics file exists
+// Ensure the analytics file exists on startup
 if (!fs.existsSync(ANALYTICS_FILE)) {
     fs.writeFileSync(ANALYTICS_FILE, '[]', 'utf8');
 }
+
+// --- PROXY ENDPOINT FOR GEMINI ---
+app.post('/api/generate-content', async (req, res) => {
+    const { prompt } = req.body;
+    const API_KEY = process.env.GOOGLE_API_KEY; // Securely get key from .env
+    const TEXT_MODEL_NAME = "gemini-2.5-flash-lite-preview-06-17";
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL_NAME}:generateContent?key=${API_KEY}`;
+
+    try {
+        const response = await axios.post(API_URL, {
+            contents: [{ parts: [{ text: prompt }] }]
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error proxying to Gemini API:', error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Failed to fetch response from AI model.' });
+    }
+});
+
+// --- PROXY ENDPOINT FOR TEXT-TO-SPEECH ---
+app.post('/api/text-to-speech', async (req, res) => {
+    const { text } = req.body;
+    const API_KEY = process.env.GOOGLE_API_KEY; // Securely get key from .env
+    const TTS_URL = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${API_KEY}`;
+    const payload = {
+        "input": { "text": text },
+        "voice": { "languageCode": "en-IN", "name": "en-IN-Chirp3-HD-Zubenelgenubi" },
+        "audioConfig": { "audioEncoding": "MP3" }
+    };
+
+    try {
+        const response = await axios.post(TTS_URL, payload);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error proxying to TTS API:', error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Failed to generate speech.' });
+    }
+});
+
+
+// --- ANALYTICS ENDPOINTS ---
 
 // Endpoint to append a new analytics entry
 app.post('/api/analytics', (req, res) => {
     const entry = req.body;
     fs.readFile(ANALYTICS_FILE, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ error: 'Read error' });
+        if (err) {
+            console.error('Analytics read error:', err);
+            return res.status(500).json({ error: 'Read error' });
+        }
         let arr = [];
-        try { arr = JSON.parse(data); } catch (e) {}
+        try {
+            arr = JSON.parse(data);
+        } catch (e) {
+            console.error('Analytics JSON parse error:', e);
+            // Ignore parse error and start with an empty array
+        }
         arr.push(entry);
         fs.writeFile(ANALYTICS_FILE, JSON.stringify(arr, null, 2), (err) => {
-            if (err) return res.status(500).json({ error: 'Write error' });
+            if (err) {
+                console.error('Analytics write error:', err);
+                return res.status(500).json({ error: 'Write error' });
+            }
             res.json({ success: true });
         });
     });
@@ -33,7 +104,10 @@ app.post('/api/analytics', (req, res) => {
 // Endpoint to get all analytics
 app.get('/api/analytics', (req, res) => {
     fs.readFile(ANALYTICS_FILE, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ error: 'Read error' });
+        if (err) {
+            console.error('Analytics read error:', err);
+            return res.status(500).json({ error: 'Read error' });
+        }
         res.json(JSON.parse(data));
     });
 });
@@ -45,19 +119,32 @@ app.post('/api/analytics/rate', (req, res) => {
         return res.status(400).json({ error: 'Invalid id or rating' });
     }
     fs.readFile(ANALYTICS_FILE, 'utf8', (err, data) => {
-        if (err) return res.status(500).json({ error: 'Read error' });
+        if (err) {
+            console.error('Analytics read error:', err);
+            return res.status(500).json({ error: 'Read error' });
+        }
         let arr = [];
-        try { arr = JSON.parse(data); } catch (e) {}
+        try {
+            arr = JSON.parse(data);
+        } catch (e) {
+            console.error('Analytics JSON parse error:', e);
+            return res.status(500).json({ error: 'Could not parse analytics file.' });
+        }
         const idx = arr.findIndex(entry => entry.id === id);
-        if (idx === -1) return res.status(404).json({ error: 'Entry not found' });
+        if (idx === -1) {
+            return res.status(404).json({ error: 'Entry not found' });
+        }
         arr[idx].rating = rating;
         fs.writeFile(ANALYTICS_FILE, JSON.stringify(arr, null, 2), (err) => {
-            if (err) return res.status(500).json({ error: 'Write error' });
+            if (err) {
+                console.error('Analytics write error:', err);
+                return res.status(500).json({ error: 'Write error' });
+            }
             res.json({ success: true });
         });
     });
 });
 
 app.listen(PORT, () => {
-    console.log(`Analytics server running on http://localhost:${PORT}`);
-}); 
+    console.log(`Analytics and Proxy server running on http://localhost:${PORT}`);
+});
