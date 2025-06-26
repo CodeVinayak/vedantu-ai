@@ -10,18 +10,11 @@ const PORT = 3001;
 const ANALYTICS_FILE = path.join(__dirname, 'vedantu_analytics.json');
 
 // --- DYNAMIC CORS CONFIGURATION ---
-// This setup allows requests from any port on localhost or 127.0.0.1,
-// which is perfect for local development with various tools (like VS Code Live Server).
+// This setup allows requests from any origin, which is suitable for broader access.
 const corsOptions = {
     origin: function (origin, callback) {
-        // 'origin' is the URL of the frontend making the request (e.g., 'http://127.0.0.1:5501')
-        if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-            // If the origin is missing (e.g., a server-to-server request) or it's from a recognized local address, allow it.
-            callback(null, true);
-        } else {
-            // Otherwise, block the request.
-            callback(new Error('Not allowed by CORS'));
-        }
+        // Allow all origins for broader access. For production, you might want to restrict this.
+        callback(null, true);
     }
 };
 
@@ -146,5 +139,5 @@ app.post('/api/analytics/rate', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Analytics and Proxy server running on http://localhost:${PORT}`);
+    console.log(`Analytics and Proxy server running on port ${PORT} (accessible globally)`);
 });
