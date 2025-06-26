@@ -17,10 +17,6 @@ const thumbsDownButton = document.getElementById('thumbsDownButton');
 const hamburgerIconPath = "M4 6h16M4 12h16M4 18h16";
 const closeIconPath = "M6 18L18 6M6 6l12 12";
 
-// --- API KEY REMOVED ---
-// The API Key has been securely moved to the backend (server.js and .env file).
-// The frontend will now make requests to your server, not directly to Google APIs.
-
 // Global variables
 let audioContext;
 let audioBuffer;
