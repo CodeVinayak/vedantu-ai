@@ -20,6 +20,7 @@ const closeIconPath = "M6 18L18 6M6 6l12 12";
 // --- API KEY REMOVED ---
 // The API Key has been securely moved to the backend (server.js and .env file).
 // The frontend will now make requests to your server, not directly to Google APIs.
+GOOGLE_API_KEY="AIzaSyDyJhbF2DUDn8plMQsUjLrrAnvYAdzdhrc";
 
 // Global variables
 let audioContext;
