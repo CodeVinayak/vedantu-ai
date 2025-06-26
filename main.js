@@ -39,10 +39,10 @@ let lastAnswerId = null;
 let loadingMessageTimeoutId = null;
 let loadingMessageIntervalId = null;
 const loadingMessages = [
-    { text: "Generating Response...", duration: 500 },
-    { text: "Thinking...", duration: 500 },
-    { text: "Almost there...", duration: 500},
-    { text: "Summoning the answer...", duration: 500 }
+    { text: "Generating Response...", duration: 1000 },
+    { text: "Thinking...", duration: 1000 },
+    { text: "Almost there...", duration: 1000},
+    { text: "Summoning the answer...", duration: 1000 }
 ];
 let currentMessageIndex = 0;
 
