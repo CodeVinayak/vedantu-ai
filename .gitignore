@@ -2,3 +2,4 @@ node_modules/
 .vscode/settings.json
 *.mp4
 .env
+vedantu_analytics.json
