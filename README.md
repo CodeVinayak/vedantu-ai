@@ -84,4 +84,4 @@ Watch a demo of the chatbot in action: [Vedantu Chatbot Demo](https://drive.goog
 2. **Chat not working**
    - Check browser console for errors
    - Verify the server is running
-   - Ensure your internet connection is stable
+   - Ensure your internet connection is working
