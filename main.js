@@ -55,7 +55,7 @@ function saveAnalyticsEntry(question, answer) {
         rating: null
     };
     lastAnswerId = entry.id;
-    fetch('http://localhost:3001/api/analytics', {
+    fetch('/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry)
@@ -94,7 +94,7 @@ async function rateAnswer(rating) {
     setRatingButtonsEnabled(false);
     setRatingButtonsHighlight(rating);
     try {
-        await fetch('http://localhost:3001/api/analytics/rate', {
+        await fetch('/api/analytics/rate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: lastAnswerId, rating })
@@ -224,7 +224,7 @@ async function textToSpeech(text) {
     playAudioButton.classList.add('opacity-50');
 
     // *** MODIFIED: URL now points to your secure backend proxy ***
-    const TTS_URL = 'http://localhost:3001/api/text-to-speech';
+    const TTS_URL = '/api/synthesize-speech';
     const payload = {
         text: text // The server only needs the text to synthesize
     };
@@ -310,7 +310,7 @@ async function generateContent() {
     `;
 
     // *** MODIFIED: URL now points to your secure backend proxy ***
-    const API_URL = 'http://localhost:3001/api/generate-content';
+    const API_URL = '/api/generate-content';
     const payload = {
         prompt: prompt // Send the full prompt to the server
     };
