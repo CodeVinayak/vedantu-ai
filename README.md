@@ -15,7 +15,6 @@ An interactive chatbot powered by Google's Gemini AI model that uses a knowledge
 
 Before you begin, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v14 or higher)
-- [Python](https://python.org/) (v3.6 or higher) - For running the frontend server
 - A modern web browser
 
 ## Setup Instructions
@@ -37,21 +36,15 @@ Before you begin, ensure you have the following installed:
 
 ## Running the Application
 
-1. **Start the backend server**
+1. **Start the server**
    ```bash
    node server.js
    ```
-   The backend server will start on port 3000
+   The server will start and serve both the frontend and backend on `http://localhost:3001`.
 
-2. **Start the frontend server**
-   ```bash
-   python -m http.server 8000
-   ```
-   This will serve the frontend files on port 8000
-
-3. **Access the application**
+2. **Access the application**
    - Open your web browser
-   - Go to [http://localhost:8000](http://localhost:8000)
+   - Go to [http://localhost:3001](http://localhost:3001)
    - The chatbot interface should now be visible and ready to use
 
 ## Usage
@@ -66,12 +59,16 @@ Before you begin, ensure you have the following installed:
 
 ## Project Structure
 
-- `index.html` - Main frontend interface
-- `style.css` - Styling for the chat interface
-- `main.js` - Frontend JavaScript logic
-- `server.js` - Backend Node.js server
-- `Vedantu.txt` - Knowledge base file
-- `vedantu_analytics.json` - Analytics storage
+- `public/`
+  - `index.html` - Main frontend interface
+  - `style.css` - Styling for the chat interface
+  - `main.js` - Frontend JavaScript logic
+  - `Vedantu.txt` - Knowledge base file
+  - Other static assets (images, documentation, etc.)
+- `api/`
+  - Serverless functions for API endpoints (e.g., `generate-content.js`, `text-to-speech.js`, `analytics.js`, `analytics/rate.js`)
+- `server.js` - Local Node.js server (for development)
+- `vedantu_analytics.json` - Local analytics storage (for development)
 
 ## Project Demo
 
@@ -79,16 +76,12 @@ Watch a demo of the chatbot in action: [Vedantu Chatbot Demo](https://drive.goog
 
 ## Troubleshooting
 
-1. **Backend server issues**
-   - Ensure port 3000 is not in use
+1. **Server issues**
+   - Ensure port 3001 is not in use
    - Check if all dependencies are installed
-   - Verify your Gemini API key is correct
+   - Verify your Gemini API key is correct (in `.env` file for Vercel, or `server.js` locally if not using `.env`)
 
-2. **Frontend server issues**
-   - Make sure port 8000 is available
-   - Try using a different port with `python -m http.server <port>`
-
-3. **Chat not working**
+2. **Chat not working**
    - Check browser console for errors
-   - Verify both servers are running
+   - Verify the server is running
    - Ensure your internet connection is stable
