@@ -3,3 +3,5 @@ node_modules/
 *.mp4
 .env
 vedantu_analytics.json
+*.log
+gcs-key.json
