@@ -18,7 +18,9 @@ const hamburgerIconPath = "M4 6h16M4 12h16M4 18h16";
 const closeIconPath = "M6 18L18 6M6 6l12 12";
 
 // Model names
+// const TEXT_MODEL_NAME = "gemini-2.5-pro-preview-06-05";
 const TEXT_MODEL_NAME = "gemini-2.5-pro-preview-06-05";
+
 
 // --- SECURITY WARNING ---
 // It's highly recommended to move this key to a secure backend environment
@@ -37,10 +39,10 @@ let lastAnswerId = null;
 let loadingMessageTimeoutId = null;
 let loadingMessageIntervalId = null;
 const loadingMessages = [
-    { text: "Generating Response...", duration: 5000 },
-    { text: "Thinking...", duration: 5000 },
-    { text: "Almost there...", duration: 5000 },
-    { text: "Summoning the answer...", duration: 5000 }
+    { text: "Generating Response...", duration: 500 },
+    { text: "Thinking...", duration: 500 },
+    { text: "Almost there...", duration: 500},
+    { text: "Summoning the answer...", duration: 500 }
 ];
 let currentMessageIndex = 0;
 
