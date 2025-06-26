@@ -20,7 +20,6 @@ const closeIconPath = "M6 18L18 6M6 6l12 12";
 // --- API KEY REMOVED ---
 // The API Key has been securely moved to the backend (server.js and .env file).
 // The frontend will now make requests to your server, not directly to Google APIs.
-GOOGLE_API_KEY="AIzaSyDyJhbF2DUDn8plMQsUjLrrAnvYAdzdhrc";
 
 // Global variables
 let audioContext;
@@ -56,7 +55,7 @@ function saveAnalyticsEntry(question, answer) {
         rating: null
     };
     lastAnswerId = entry.id;
-    fetch('http://localhost:3001/api/analytics', {
+    fetch('/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry)
@@ -95,7 +94,7 @@ async function rateAnswer(rating) {
     setRatingButtonsEnabled(false);
     setRatingButtonsHighlight(rating);
     try {
-        await fetch('http://localhost:3001/api/analytics/rate', {
+        await fetch('/api/analytics/rate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: lastAnswerId, rating })
@@ -225,7 +224,7 @@ async function textToSpeech(text) {
     playAudioButton.classList.add('opacity-50');
 
     // *** MODIFIED: URL now points to your secure backend proxy ***
-    const TTS_URL = 'http://localhost:3001/api/text-to-speech';
+    const TTS_URL = '/api/text-to-speech';
     const payload = {
         text: text // The server only needs the text to synthesize
     };
@@ -311,16 +310,24 @@ async function generateContent() {
     `;
 
     // *** MODIFIED: URL now points to your secure backend proxy ***
-    const API_URL = 'http://localhost:3001/api/generate-content';
+    const API_URL = '/api/generate-content';
     const payload = {
         prompt: prompt // Send the full prompt to the server
     };
 
     try {
+        // Display loading messages after a short delay
+        loadingMessageTimeoutId = setTimeout(() => {
+            loadingIndicator.classList.remove('hidden');
+            startLoadingMessages();
+        }, 300);
+
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
