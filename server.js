@@ -7,7 +7,8 @@ require('dotenv').config(); // Loads variables from your .env file
 
 const app = express();
 const PORT = 3001;
-const ANALYTICS_FILE = path.join(__dirname, 'vedantu_analytics.json');
+// const ANALYTICS_FILE = path.join(__dirname, 'vedantu_analytics.json'); // Removed for in-memory analytics
+let analyticsData = []; // In-memory storage for localhost analytics
 
 // --- DYNAMIC CORS CONFIGURATION ---
 // This setup allows requests from any origin, which is suitable for broader access.
@@ -30,10 +31,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Ensure the analytics file exists on startup
-if (!fs.existsSync(ANALYTICS_FILE)) {
-    fs.writeFileSync(ANALYTICS_FILE, '[]', 'utf8');
-}
+// Ensure the analytics file exists on startup // This block is no longer needed with in-memory storage
+// if (!fs.existsSync(ANALYTICS_FILE)) {
+//     fs.writeFileSync(ANALYTICS_FILE, '[]', 'utf8');
+// }
 
 // --- PROXY ENDPOINT FOR GEMINI ---
 app.post('/api/generate-content', async (req, res) => {
@@ -79,38 +80,13 @@ app.post('/api/text-to-speech', async (req, res) => {
 // Endpoint to append a new analytics entry
 app.post('/api/analytics', (req, res) => {
     const entry = req.body;
-    fs.readFile(ANALYTICS_FILE, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Analytics read error:', err);
-            return res.status(500).json({ error: 'Read error' });
-        }
-        let arr = [];
-        try {
-            arr = JSON.parse(data);
-        } catch (e) {
-            console.error('Analytics JSON parse error:', e);
-            // Ignore parse error and start with an empty array
-        }
-        arr.push(entry);
-        fs.writeFile(ANALYTICS_FILE, JSON.stringify(arr, null, 2), (err) => {
-            if (err) {
-                console.error('Analytics write error:', err);
-                return res.status(500).json({ error: 'Write error' });
-            }
-            res.json({ success: true });
-        });
-    });
+    analyticsData.push(entry);
+    res.json({ success: true });
 });
 
 // Endpoint to get all analytics
 app.get('/api/analytics', (req, res) => {
-    fs.readFile(ANALYTICS_FILE, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Analytics read error:', err);
-            return res.status(500).json({ error: 'Read error' });
-        }
-        res.json(JSON.parse(data));
-    });
+    res.json(analyticsData);
 });
 
 // Endpoint to update rating for an analytics entry
@@ -119,31 +95,12 @@ app.post('/api/analytics/rate', (req, res) => {
     if (!id || !['up', 'down'].includes(rating)) {
         return res.status(400).json({ error: 'Invalid id or rating' });
     }
-    fs.readFile(ANALYTICS_FILE, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Analytics read error:', err);
-            return res.status(500).json({ error: 'Read error' });
-        }
-        let arr = [];
-        try {
-            arr = JSON.parse(data);
-        } catch (e) {
-            console.error('Analytics JSON parse error:', e);
-            return res.status(500).json({ error: 'Could not parse analytics file.' });
-        }
-        const idx = arr.findIndex(entry => entry.id === id);
-        if (idx === -1) {
-            return res.status(404).json({ error: 'Entry not found' });
-        }
-        arr[idx].rating = rating;
-        fs.writeFile(ANALYTICS_FILE, JSON.stringify(arr, null, 2), (err) => {
-            if (err) {
-                console.error('Analytics write error:', err);
-                return res.status(500).json({ error: 'Write error' });
-            }
-            res.json({ success: true });
-        });
-    });
+    const idx = analyticsData.findIndex(entry => entry.id === id);
+    if (idx === -1) {
+        return res.status(404).json({ error: 'Entry not found' });
+    }
+    analyticsData[idx].rating = rating;
+    res.json({ success: true });
 });
 
 app.listen(PORT, () => {
