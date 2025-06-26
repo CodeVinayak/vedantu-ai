@@ -7,7 +7,7 @@ require('dotenv').config(); // Loads variables from your .env file
 
 const app = express();
 const PORT = 3001;
-// const ANALYTICS_FILE = path.join(__dirname, 'vedantu_analytics.json'); // Removed for in-memory analytics
+const ANALYTICS_FILE = path.join(__dirname, 'vedantu_analytics.json'); // Re-introduced for persistent storage
 let analyticsData = []; // In-memory storage for localhost analytics
 
 // --- DYNAMIC CORS CONFIGURATION ---
@@ -31,10 +31,23 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Ensure the analytics file exists on startup // This block is no longer needed with in-memory storage
-// if (!fs.existsSync(ANALYTICS_FILE)) {
-//     fs.writeFileSync(ANALYTICS_FILE, '[]', 'utf8');
-// }
+// Ensure the analytics file exists and load its contents on startup
+try {
+    if (fs.existsSync(ANALYTICS_FILE)) {
+        const data = fs.readFileSync(ANALYTICS_FILE, 'utf8');
+        analyticsData = JSON.parse(data);
+    } else {
+        fs.writeFileSync(ANALYTICS_FILE, '[]', 'utf8');
+    }
+} catch (error) {
+    console.error('Error initializing analytics data:', error);
+    analyticsData = []; // Fallback to empty array on error
+}
+
+// Function to save analytics data to file
+const saveAnalyticsData = () => {
+    fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(analyticsData, null, 2), 'utf8');
+};
 
 // --- PROXY ENDPOINT FOR GEMINI ---
 app.post('/api/generate-content', async (req, res) => {
@@ -81,6 +94,7 @@ app.post('/api/text-to-speech', async (req, res) => {
 app.post('/api/analytics', (req, res) => {
     const entry = req.body;
     analyticsData.push(entry);
+    saveAnalyticsData(); // Save data after adding
     res.json({ success: true });
 });
 
@@ -100,6 +114,7 @@ app.post('/api/analytics/rate', (req, res) => {
         return res.status(404).json({ error: 'Entry not found' });
     }
     analyticsData[idx].rating = rating;
+    saveAnalyticsData(); // Save data after updating rating
     res.json({ success: true });
 });
 

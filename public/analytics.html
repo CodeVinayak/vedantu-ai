@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vedantu Analytics Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .rating-up {
+            color: green;
+            font-weight: bold;
+        }
+        .rating-down {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vedantu Analytics Dashboard</h1>
+        <div id="analytics-data">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Question</th>
+                        <th>Answer</th>
+                        <th>Timestamp</th>
+                        <th>Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="analytics-table-body">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAnalyticsData();
+        });
+
+        async function fetchAnalyticsData() {
+            try {
+                const response = await fetch('/api/analytics');
+                const data = await response.json();
+                renderAnalyticsTable(data);
+            } catch (error) {
+                console.error('Error fetching analytics data:', error);
+                document.getElementById('analytics-data').innerHTML = '<p>Error loading analytics data. Please try again later.</p>';
+            }
+        }
+
+        function renderAnalyticsTable(data) {
+            const tableBody = document.getElementById('analytics-table-body');
+            tableBody.innerHTML = ''; // Clear existing data
+
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5">No analytics data available.</td></tr>';
+                return;
+            }
+
+            // Sort data by timestamp in descending order (latest first)
+            data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            data.forEach(entry => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = entry.id;
+                row.insertCell().textContent = entry.question;
+                row.insertCell().textContent = entry.answer;
+                row.insertCell().textContent = new Date(entry.timestamp).toLocaleString();
+
+                const ratingCell = row.insertCell();
+                if (entry.rating === 'up') {
+                    ratingCell.textContent = '👍';
+                    ratingCell.classList.add('rating-up');
+                } else if (entry.rating === 'down') {
+                    ratingCell.textContent = '👎';
+                    ratingCell.classList.add('rating-down');
+                } else {
+                    ratingCell.textContent = '-';
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
