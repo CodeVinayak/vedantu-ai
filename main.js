@@ -19,7 +19,7 @@ const closeIconPath = "M6 18L18 6M6 6l12 12";
 
 // Model names
 // const TEXT_MODEL_NAME = "gemini-2.5-pro-preview-06-05";
-const TEXT_MODEL_NAME = "gemini-2.5-pro-preview-06-05";
+const TEXT_MODEL_NAME = "gemini-2.5-flash-lite-preview-06-17";
 
 
 // --- SECURITY WARNING ---
